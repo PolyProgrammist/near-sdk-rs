@@ -2,7 +2,7 @@ use crate::core_impl::info_extractor::{ImplItemMethodInfo, SerializerType};
 use crate::core_impl::utils;
 use crate::core_impl::{MethodKind, ReturnKind};
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::Receiver;
 
 impl ImplItemMethodInfo {
@@ -88,9 +88,26 @@ impl ImplItemMethodInfo {
         let result_identifier = self.result_identifier();
         let handle_error = self.error_handling_tokens();
 
+        let the_type;
+        if self.attr_signature_info.ident.to_string() == "inc_persist_on_err".to_string() {
+            the_type = quote!{Result<u32, MyErrorEnum>};
+        } else {
+            the_type = quote!{Result<u32, MyErrorStruct>};
+        }
+
+        let the_type = match self.attr_signature_info.returns.kind.clone() {
+            ReturnKind::HandlesResultImplicit(status_kind) => {
+                status_kind.result_type.clone().to_token_stream()
+            },
+            _ => the_type.clone().to_token_stream(),
+        };
+        // eprintln!("my_type: {}", my_type);
+
         quote! {
             #contract_init
             #method_invocation_with_return
+            use near_sdk::ContractReturn;
+            let #result_identifier = (&std::marker::PhantomData::<#the_type>).normalize_return(501, #result_identifier);
             match #result_identifier {
                 ::std::result::Result::Ok(#result_identifier) => {
                     #value_ser

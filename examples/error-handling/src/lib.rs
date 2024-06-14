@@ -19,6 +19,8 @@ pub struct Contract {
     value: u32,
 }
 
+type MyResultAlias = Result<u32, MyErrorEnum>;
+
 #[near]
 impl Contract {
     #[init]
@@ -39,15 +41,15 @@ impl Contract {
     // 0: Error: An error occurred during a `FunctionCall` Action, parameter is debug message.
     // ExecutionError("Smart contract panicked: error in inc_handle_result")
     // (does not change value)
-    #[handle_result]
-    pub fn inc_handle_result(&mut self, is_error: bool) -> Result<u32, &'static str> {
-        self.value += 1;
-        if is_error {
-            Err("error in inc_handle_result")
-        } else {
-            Ok(self.value)
-        }
-    }
+    // #[handle_result]
+    // pub fn inc_handle_result(&mut self, is_error: bool) -> Result<u32, &'static str> {
+    //     self.value += 1;
+    //     if is_error {
+    //         Err("error in inc_handle_result")
+    //     } else {
+    //         Ok(self.value)
+    //     }
+    // }
 
     // Examples of RPC response for function call:
     // is_error = false
@@ -94,6 +96,15 @@ impl Contract {
         }
     }
 
+    // pub fn inc_alias(&mut self, is_error: bool) -> MyResultAlias {
+    //     self.value += 1;
+    //     if is_error {
+    //         Err(MyErrorEnum::X)
+    //     } else {
+    //         Ok(self.value)
+    //     }
+    // }
+
     // Examples of RPC response for function call:
     // is_error = false
     // --- Result -------------------------
@@ -129,14 +140,14 @@ impl Contract {
     // 0: Error: An error occurred during a `FunctionCall` Action, parameter is debug message.
     //  ExecutionError("Smart contract panicked: {\\\"error\\\":{\\\"cause\\\":{\\\"info\\\":{\\\"error\\\":{\\\"x\\\":5}},\\\"name\\\":\\\"near_sdk::utils::contract_error::BaseError\\\"},\\\"name\\\":\\\"CUSTOM_CONTRACT_ERROR\\\"}}")
     // (does not change value)
-    pub fn inc_base_error(&mut self, is_error: bool) -> Result<u32, BaseError> {
-        self.value += 1;
-        if is_error {
-            Err(MyErrorStruct { x: 5 }.into())
-        } else {
-            Ok(self.value)
-        }
-    }
+    // pub fn inc_base_error(&mut self, is_error: bool) -> Result<u32, BaseError> {
+    //     self.value += 1;
+    //     if is_error {
+    //         Err(MyErrorStruct { x: 5 }.into())
+    //     } else {
+    //         Ok(self.value)
+    //     }
+    // }
 
     // Does not compile as u64 is not marked with contract_error
     // > the trait `ContractErrorTrait` is not implemented for `u64`
