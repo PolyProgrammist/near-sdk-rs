@@ -123,6 +123,7 @@ impl ImplItemMethodInfo {
                     #contract_ser
                 }
                 ::std::result::Result::Err(err) => {
+                    near_sdk::check_contract_error_trait(&err);
                     #handle_error
                 }
             }
