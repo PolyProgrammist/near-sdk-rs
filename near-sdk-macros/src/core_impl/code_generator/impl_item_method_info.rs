@@ -102,7 +102,10 @@ impl ImplItemMethodInfo {
             ReturnKind::HandlesResultImplicit(status_kind) => {
                 status_kind.result_type.clone().to_token_stream()
             },
-            ReturnKind::General(the_type) => the_type.clone().to_token_stream(),
+            ReturnKind::General(status_kind) => {
+                status_kind.result_type.clone().to_token_stream()
+            },
+            // ReturnKind::General(the_type) => the_type.clone().to_token_stream(),
             _ => the_type.clone().to_token_stream(),
         };
         eprintln!("my_type: {:?}", self.attr_signature_info.returns.kind);
@@ -141,9 +144,22 @@ impl ImplItemMethodInfo {
                     utils::standardized_error_panic_tokens()
                 }
             },
-            ReturnKind::General(the_type) => {
-                utils::standardized_error_panic_tokens()
+            ReturnKind::General(status_result) => {
+                if status_result.persist_on_error {
+                    let error_method_name =
+                        quote::format_ident!("{}_error", self.attr_signature_info.ident);
+                    let contract_ser = self.contract_ser_tokens();
+                    quote! {
+                        #contract_ser
+                        let promise = Contract::ext(::near_sdk::env::current_account_id()).#error_method_name(err).as_return();
+                    }
+                } else {
+                    utils::standardized_error_panic_tokens()
+                }
             },
+            // ReturnKind::General(the_type) => {
+            //     utils::standardized_error_panic_tokens()
+            // },
             ReturnKind::HandlesResultExplicit { .. } => quote! {
                 ::near_sdk::FunctionError::panic(&err);
             },

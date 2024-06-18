@@ -109,7 +109,7 @@ pub enum ReturnKind {
     /// ```ignore
     /// pub fn foo(&mut self) -> u64;
     /// ```
-    General(Type),
+    General(StatusResult),
 
     /// Return type is Result<OkType, ErrType> and the function is marked with #[handle_result].
     /// ErrType struct implements near_sdk::FunctionError. (i.e. used with #[derive(near_sdk::FunctionError)])

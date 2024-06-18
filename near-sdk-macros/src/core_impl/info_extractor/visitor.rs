@@ -241,7 +241,10 @@ fn parse_return_kind(
                     persist_on_error,
                 }))
             } else {
-                Ok(ReturnKind::General(typ.clone()))
+                Ok(ReturnKind::General(crate::StatusResult {
+                    result_type: typ.clone(),
+                    persist_on_error,
+                }))
             }
         }
     }
