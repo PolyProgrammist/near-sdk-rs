@@ -83,7 +83,7 @@ pub struct Returns {
     pub kind: ReturnKind,
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum ReturnKind {
     /// Return type is not specified.
     ///
@@ -159,7 +159,7 @@ pub enum ReturnKind {
 }
 /// In other cases the code should not compile
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct StatusResult {
     pub result_type: Type,
     pub persist_on_error: bool,

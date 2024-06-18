@@ -28,9 +28,17 @@ impl ImplItemMethodInfo {
             // Extractor errors if Init method doesn't return anything, so we don't need extra check
             // here.
             ReturnKind::Default => self.void_return_body_tokens(),
-            ReturnKind::General(_) => self.value_return_body_tokens(),
+            ReturnKind::General(_) => {
+                eprintln!("body: {:?}", self.attr_signature_info.returns.kind);
+                eprintln!("body: {}", self.result_return_body_tokens().to_string());
+                self.result_return_body_tokens()
+            },
             ReturnKind::HandlesResultExplicit { .. } => self.result_return_body_tokens(),
-            ReturnKind::HandlesResultImplicit { .. } => self.result_return_body_tokens(),
+            ReturnKind::HandlesResultImplicit { .. } => {
+                eprintln!("body: {:?}", self.attr_signature_info.returns.kind);
+                eprintln!("body: {}", self.result_return_body_tokens().to_string());
+                self.result_return_body_tokens()
+            },
         };
 
         quote! {
@@ -88,20 +96,17 @@ impl ImplItemMethodInfo {
         let result_identifier = self.result_identifier();
         let handle_error = self.error_handling_tokens();
 
-        let the_type;
-        if self.attr_signature_info.ident.to_string() == "inc_persist_on_err".to_string() {
-            the_type = quote!{Result<u32, MyErrorEnum>};
-        } else {
-            the_type = quote!{Result<u32, MyErrorStruct>};
-        }
+        let the_type = quote!{} ;
 
         let the_type = match self.attr_signature_info.returns.kind.clone() {
             ReturnKind::HandlesResultImplicit(status_kind) => {
                 status_kind.result_type.clone().to_token_stream()
             },
+            ReturnKind::General(the_type) => the_type.clone().to_token_stream(),
             _ => the_type.clone().to_token_stream(),
         };
-        // eprintln!("my_type: {}", my_type);
+        eprintln!("my_type: {:?}", self.attr_signature_info.returns.kind);
+        eprintln!("the_type: {}", the_type.to_string());
 
         quote! {
             #contract_init
@@ -135,7 +140,10 @@ impl ImplItemMethodInfo {
                 } else {
                     utils::standardized_error_panic_tokens()
                 }
-            }
+            },
+            ReturnKind::General(the_type) => {
+                utils::standardized_error_panic_tokens()
+            },
             ReturnKind::HandlesResultExplicit { .. } => quote! {
                 ::near_sdk::FunctionError::panic(&err);
             },

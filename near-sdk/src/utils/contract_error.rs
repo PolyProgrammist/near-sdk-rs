@@ -34,7 +34,7 @@ pub trait ContractReturn<S, Error> {
     ) -> Result<Self::Okay, Error>;
 }
 
-impl<S, T, Error> ContractReturn<S, Error> for PhantomData<T> {
+impl<S, T> ContractReturn<S, BaseError> for PhantomData<T> {
     type Input = T;
     type Okay = T;
 
@@ -42,7 +42,7 @@ impl<S, T, Error> ContractReturn<S, Error> for PhantomData<T> {
         self,
         _serialization_format: S,
         ret: Self::Input,
-    ) -> Result<Self::Okay, Error> {
+    ) -> Result<Self::Okay, BaseError> {
         Ok(ret)
     }
 }
