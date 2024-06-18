@@ -42,7 +42,24 @@ impl ItemImplInfo {
                     error_methods.extend(quote! {
                         #[near]
                         impl #ty {
-                            pub fn #error_method_name(&self, err: #error_type) {
+                            pub fn #error_method_name(&self, err: near_sdk::BaseError) {
+                                #panic_tokens
+                            }
+                        }
+                    });
+                }
+            }
+            if let ReturnKind::General(status) = &method.returns.kind {
+                if status.persist_on_error {
+                    let error_type = crate::get_error_type_from_status(status);
+                    let panic_tokens = crate::standardized_error_panic_tokens();
+
+                    let ty = self.ty.to_token_stream();
+
+                    error_methods.extend(quote! {
+                        #[near]
+                        impl #ty {
+                            pub fn #error_method_name(&self, err: near_sdk::BaseError) {
                                 #panic_tokens
                             }
                         }

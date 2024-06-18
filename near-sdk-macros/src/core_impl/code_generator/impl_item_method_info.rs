@@ -139,7 +139,7 @@ impl ImplItemMethodInfo {
                     let contract_ser = self.contract_ser_tokens();
                     quote! {
                         #contract_ser
-                        let promise = Contract::ext(::near_sdk::env::current_account_id()).#error_method_name(err).as_return();
+                        let promise = Contract::ext(::near_sdk::env::current_account_id()).#error_method_name(err.into()).as_return();
                     }
                 } else {
                     utils::standardized_error_panic_tokens()
@@ -152,7 +152,7 @@ impl ImplItemMethodInfo {
                     let contract_ser = self.contract_ser_tokens();
                     quote! {
                         #contract_ser
-                        let promise = Contract::ext(::near_sdk::env::current_account_id()).#error_method_name(err).as_return();
+                        let promise = Contract::ext(::near_sdk::env::current_account_id()).#error_method_name(err.into()).as_return();
                     }
                 } else {
                     utils::standardized_error_panic_tokens()
