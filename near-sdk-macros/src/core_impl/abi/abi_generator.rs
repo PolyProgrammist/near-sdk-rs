@@ -214,10 +214,6 @@ impl ImplItemMethodInfo {
                 let ty = parse_quote! { <#ty as near_sdk::__private::ResultTypeExt>::Okay };
                 self.abi_result_tokens_with_return_value(&ty)
             }
-            HandlesResultImplicit(status_result) => {
-                let ty = &status_result.result_type;
-                self.abi_result_tokens_with_return_value(&ty)
-            }
         }
     }
 

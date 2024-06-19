@@ -34,11 +34,6 @@ impl ImplItemMethodInfo {
                 self.result_return_body_tokens()
             },
             ReturnKind::HandlesResultExplicit { .. } => self.result_return_body_tokens(),
-            ReturnKind::HandlesResultImplicit { .. } => {
-                eprintln!("body: {:?}", self.attr_signature_info.returns.kind);
-                eprintln!("body: {}", self.result_return_body_tokens().to_string());
-                self.result_return_body_tokens()
-            },
         };
 
         quote! {
@@ -99,9 +94,6 @@ impl ImplItemMethodInfo {
         let the_type = quote!{} ;
 
         let the_type = match self.attr_signature_info.returns.kind.clone() {
-            ReturnKind::HandlesResultImplicit(status_kind) => {
-                status_kind.result_type.clone().to_token_stream()
-            },
             ReturnKind::General(status_kind) => {
                 status_kind.result_type.clone().to_token_stream()
             },
@@ -132,19 +124,6 @@ impl ImplItemMethodInfo {
 
     fn error_handling_tokens(&self) -> TokenStream2 {
         match &self.attr_signature_info.returns.kind {
-            ReturnKind::HandlesResultImplicit(status_result) => {
-                if status_result.persist_on_error {
-                    let error_method_name =
-                        quote::format_ident!("{}_error", self.attr_signature_info.ident);
-                    let contract_ser = self.contract_ser_tokens();
-                    quote! {
-                        #contract_ser
-                        let promise = Contract::ext(::near_sdk::env::current_account_id()).#error_method_name(err.into()).as_return();
-                    }
-                } else {
-                    utils::standardized_error_panic_tokens()
-                }
-            },
             ReturnKind::General(status_result) => {
                 if status_result.persist_on_error {
                     let error_method_name =
