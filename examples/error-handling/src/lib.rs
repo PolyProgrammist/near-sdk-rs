@@ -2,8 +2,6 @@
 use near_sdk::contract_error;
 use near_sdk::near;
 use near_sdk::BaseError;
-use near_sdk::borsh::BorshSchema;
-use schemars::JsonSchema;
 
 #[contract_error]
 pub enum MyErrorEnum {

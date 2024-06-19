@@ -23,7 +23,9 @@ pub fn wrap_error<T: ContractErrorTrait>(error: T) -> serde_json::Value {
 
 use std::marker::PhantomData;
 
-use crate::borsh::{schema::BorshSchemaContainer, BorshSchema};
+#[cfg(feature = "abi")]
+use borsh::{schema::BorshSchemaContainer, BorshSchema};
+#[cfg(feature = "abi")]
 use schemars::{schema::{RootSchema, Schema}, schema_for, JsonSchema};
 
 #[cfg(feature = "abi")]
