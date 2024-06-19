@@ -185,8 +185,6 @@ impl ImplItemMethodInfo {
 
         let result = self.abi_result_tokens();
 
-        eprintln!("abi_result_tokens: {}", result);
-
         quote! {
              ::near_sdk::__private::AbiFunction {
                  name: ::std::string::String::from(#function_name_str),
@@ -209,7 +207,8 @@ impl ImplItemMethodInfo {
             General(status_result) => {
                 let ty = &status_result.result_type;
                 self.abi_result_tokens_with_return_value(&ty)
-            }            HandlesResultExplicit(ty) => {
+            },
+            HandlesResultExplicit(ty) => {
                 // extract the `Ok` type from the result
                 let ty = parse_quote! { <#ty as near_sdk::__private::ResultTypeExt>::Okay };
                 self.abi_result_tokens_with_return_value(&ty)
@@ -252,12 +251,10 @@ impl ImplItemMethodInfo {
 fn generate_schema(ty: &Type, serializer_type: &SerializerType) -> TokenStream2 {
     match serializer_type {
         SerializerType::JSON => quote! {
-            // gen.subschema_for::<#ty>()
-            (&std::marker::PhantomData::<#ty>).schema(near_sdk::MyJson)
+            (&std::marker::PhantomData::<#ty>).schema(near_sdk::JsonSerializationFormat)
         },
         SerializerType::Borsh => quote! {
-            // ::near_sdk::borsh::schema_container_of::<#ty>()
-            (&std::marker::PhantomData::<#ty>).schema(near_sdk::MyBorsh)
+            (&std::marker::PhantomData::<#ty>).schema(near_sdk::BorshSerializationFormat)
         },
     }
 }

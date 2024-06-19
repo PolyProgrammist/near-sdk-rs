@@ -25,7 +25,6 @@ async fn check_call(
         .transact()
         .await
         .unwrap();
-    println!("res: {:?}", res);
     if is_error {
         assert!(res.is_failure());
         if let Some(expected_error) = expected_error {
