@@ -1,4 +1,6 @@
 use syn::{Receiver, ReturnType, Type};
+use quote::ToTokens;
+use proc_macro2::TokenStream as TokenStream2;
 
 mod serializer_attr;
 pub use serializer_attr::SerializerAttr;
@@ -131,4 +133,18 @@ pub enum ReturnKind {
 pub struct StatusResult {
     pub result_type: Type,
     pub persist_on_error: bool,
+}
+
+impl ReturnKind {
+    pub fn get_return_kind_type(&self) -> TokenStream2 {
+        match self {
+            ReturnKind::General(status_kind) => {
+                status_kind.result_type.clone().to_token_stream()
+            },
+            ReturnKind::HandlesResultExplicit(result_type) => {
+                result_type.to_token_stream()
+            },
+            ReturnKind::Default => unreachable!(),
+        }
+    }
 }

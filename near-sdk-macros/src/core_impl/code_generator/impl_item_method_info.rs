@@ -2,7 +2,7 @@ use crate::core_impl::info_extractor::{ImplItemMethodInfo, SerializerType};
 use crate::core_impl::utils;
 use crate::core_impl::{MethodKind, ReturnKind};
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::Receiver;
 
 impl ImplItemMethodInfo {
@@ -62,22 +62,6 @@ impl ImplItemMethodInfo {
         }
     }
 
-    fn value_return_body_tokens(&self) -> TokenStream2 {
-        let contract_init = self.contract_init_tokens();
-        let method_invocation_with_return = self.method_invocation_with_return_tokens();
-        let contract_ser = self.contract_ser_tokens();
-        let value_ser = self.value_ser_tokens();
-        let value_return = self.value_return_tokens();
-
-        quote! {
-            #contract_init
-            #method_invocation_with_return
-            #value_ser
-            #value_return
-            #contract_ser
-        }
-    }
-
     fn result_return_body_tokens(&self) -> TokenStream2 {
         let contract_init = self.contract_init_tokens();
         let method_invocation_with_return = self.method_invocation_with_return_tokens();
@@ -87,23 +71,14 @@ impl ImplItemMethodInfo {
         let result_identifier = self.result_identifier();
         let handle_error = self.error_handling_tokens();
 
-        let the_type = quote!{} ;
         let mut check_contract_error_trait = quote!{};
-        if let ReturnKind::General(status_kind) = &self.attr_signature_info.returns.kind {
+        if let ReturnKind::General(_) = &self.attr_signature_info.returns.kind {
             check_contract_error_trait = quote! {
                 near_sdk::check_contract_error_trait(&err);
             };
         }
 
-        let the_type = match self.attr_signature_info.returns.kind.clone() {
-            ReturnKind::General(status_kind) => {
-                status_kind.result_type.clone().to_token_stream()
-            },
-            ReturnKind::HandlesResultExplicit(my_type) => {
-                my_type.to_token_stream()
-            },
-            _ => the_type.clone().to_token_stream(),
-        };
+        let the_type = self.attr_signature_info.returns.kind.get_return_kind_type();
 
         quote! {
             #contract_init

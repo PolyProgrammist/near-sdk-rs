@@ -1,9 +1,8 @@
 use crate::core_impl::ext::generate_ext_function_wrappers;
-use crate::core_impl::utils;
 use crate::core_impl::ReturnKind;
 use crate::ItemImplInfo;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote, ToTokens};
+use quote::{quote, ToTokens};
 use syn::{spanned::Spanned, Ident};
 
 impl ItemImplInfo {
@@ -33,9 +32,7 @@ impl ItemImplInfo {
             let error_method_name = quote::format_ident!("{}_error", method.ident);
             if let ReturnKind::General(status) = &method.returns.kind {
                 if status.persist_on_error {
-                    let error_type = crate::get_error_type_from_status(status);
                     let panic_tokens = crate::standardized_error_panic_tokens();
-
                     let ty = self.ty.to_token_stream();
 
                     error_methods.extend(quote! {
