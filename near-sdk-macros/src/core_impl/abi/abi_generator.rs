@@ -21,6 +21,7 @@ pub fn generate(i: &ItemImplInfo) -> TokenStream2 {
             #[no_mangle]
             pub extern "C" fn #near_abi_symbol() -> (*const u8, usize) {
                 use ::std::string::String;
+                use ::near_sdk::ContractReturn;
 
                 let mut gen = ::near_sdk::schemars::gen::SchemaGenerator::default();
                 let functions = vec![#(#functions),*];
@@ -184,6 +185,8 @@ impl ImplItemMethodInfo {
 
         let result = self.abi_result_tokens();
 
+        eprintln!("abi_result_tokens: {}", result);
+
         quote! {
              ::near_sdk::__private::AbiFunction {
                  name: ::std::string::String::from(#function_name_str),
@@ -203,15 +206,16 @@ impl ImplItemMethodInfo {
 
         match &self.attr_signature_info.returns.kind {
             Default => quote! { ::std::option::Option::None },
-            General(ty) => self.abi_result_tokens_with_return_value(ty),
-            HandlesResultExplicit(ty) => {
+            General(status_result) => {
+                let ty = &status_result.result_type;
+                self.abi_result_tokens_with_return_value(&ty)
+            }            HandlesResultExplicit(ty) => {
                 // extract the `Ok` type from the result
                 let ty = parse_quote! { <#ty as near_sdk::__private::ResultTypeExt>::Okay };
                 self.abi_result_tokens_with_return_value(&ty)
             }
             HandlesResultImplicit(status_result) => {
                 let ty = &status_result.result_type;
-                let ty = parse_quote! { <#ty as near_sdk::__private::ResultTypeExt>::Okay };
                 self.abi_result_tokens_with_return_value(&ty)
             }
         }
@@ -252,10 +256,12 @@ impl ImplItemMethodInfo {
 fn generate_schema(ty: &Type, serializer_type: &SerializerType) -> TokenStream2 {
     match serializer_type {
         SerializerType::JSON => quote! {
-            gen.subschema_for::<#ty>()
+            // gen.subschema_for::<#ty>()
+            (&std::marker::PhantomData::<#ty>).schema(near_sdk::MyJson)
         },
         SerializerType::Borsh => quote! {
-            ::near_sdk::borsh::schema_container_of::<#ty>()
+            // ::near_sdk::borsh::schema_container_of::<#ty>()
+            (&std::marker::PhantomData::<#ty>).schema(near_sdk::MyBorsh)
         },
     }
 }

@@ -7,7 +7,7 @@ pub(crate) use self::stable_map::StableMap;
 mod cache_entry;
 pub(crate) use cache_entry::{CacheEntry, EntryState};
 mod contract_error;
-pub use contract_error::{check_contract_error_trait, wrap_error, BaseError, ContractErrorTrait, ContractReturn};
+pub use contract_error::{check_contract_error_trait, wrap_error, BaseError, ContractErrorTrait, ContractReturn, Json as MyJson, Borsh as MyBorsh};
 
 use crate::{env, NearToken, PromiseResult};
 

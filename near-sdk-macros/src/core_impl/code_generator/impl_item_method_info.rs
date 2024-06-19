@@ -115,7 +115,7 @@ impl ImplItemMethodInfo {
             #contract_init
             #method_invocation_with_return
             use near_sdk::ContractReturn;
-            let #result_identifier = (&std::marker::PhantomData::<#the_type>).normalize_return(501, #result_identifier);
+            let #result_identifier = (&std::marker::PhantomData::<#the_type>).normalize_return(near_sdk::MyJson, #result_identifier);
             match #result_identifier {
                 ::std::result::Result::Ok(#result_identifier) => {
                     #value_ser
