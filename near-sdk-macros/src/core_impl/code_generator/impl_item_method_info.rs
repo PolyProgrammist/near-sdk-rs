@@ -71,7 +71,7 @@ impl ImplItemMethodInfo {
         let result_identifier = self.result_identifier();
         let handle_error = self.error_handling_tokens();
 
-        let mut check_contract_error_trait = quote!{};
+        let mut check_contract_error_trait = quote! {};
         if let ReturnKind::General(_) = &self.attr_signature_info.returns.kind {
             check_contract_error_trait = quote! {
                 near_sdk::check_contract_error_trait(&err);
@@ -113,7 +113,7 @@ impl ImplItemMethodInfo {
                 } else {
                     utils::standardized_error_panic_tokens()
                 }
-            },
+            }
             ReturnKind::HandlesResultExplicit { .. } => quote! {
                 ::near_sdk::FunctionError::panic(&err);
             },

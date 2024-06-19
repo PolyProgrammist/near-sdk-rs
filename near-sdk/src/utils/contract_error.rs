@@ -36,34 +36,23 @@ pub trait ContractReturnNormalize<Error> {
     // The only reason the `_serialization_format` parameter is here is
     // so that we can disambiguate the `S` type parameter in scenarios
     // where we abuse deref coercion.
-    fn normalize_return(
-        self,
-        ret: Self::Input,
-    ) -> Result<Self::Okay, Error>;
+    fn normalize_return(self, ret: Self::Input) -> Result<Self::Okay, Error>;
 }
 
 impl<T> ContractReturnNormalize<BaseError> for PhantomData<T> {
     type Input = T;
     type Okay = T;
 
-    fn normalize_return(
-        self,
-        ret: Self::Input,
-    ) -> Result<Self::Okay, BaseError> {
+    fn normalize_return(self, ret: Self::Input) -> Result<Self::Okay, BaseError> {
         Ok(ret)
     }
 }
 
-impl<T, Error> ContractReturnNormalize<Error>
-    for &PhantomData<Result<T, Error>>
-{
+impl<T, Error> ContractReturnNormalize<Error> for &PhantomData<Result<T, Error>> {
     type Input = Result<T, Error>;
     type Okay = T;
 
-    fn normalize_return(
-        self,
-        ret: Self::Input,
-    ) -> Result<Self::Okay, Error> {
+    fn normalize_return(self, ret: Self::Input) -> Result<Self::Okay, Error> {
         ret
     }
 }
@@ -71,7 +60,7 @@ impl<T, Error> ContractReturnNormalize<Error>
 #[cfg(feature = "abi")]
 use borsh::{schema::BorshSchemaContainer, BorshSchema};
 #[cfg(feature = "abi")]
-use schemars::{schema::{RootSchema, Schema}, schema_for, JsonSchema};
+use schemars::{schema::Schema, JsonSchema};
 
 #[cfg(feature = "abi")]
 pub trait SerializationFormat {
@@ -129,7 +118,9 @@ pub trait ContractReturnSchema<S: SerializationFormat, Error> {
 }
 
 #[cfg(feature = "abi")]
-impl<S: SerializationFormat, T: SerializableWith<S>> ContractReturnSchema<S, BaseError> for PhantomData<T> {
+impl<S: SerializationFormat, T: SerializableWith<S>> ContractReturnSchema<S, BaseError>
+    for PhantomData<T>
+{
     type Input = T;
     type Okay = T;
 

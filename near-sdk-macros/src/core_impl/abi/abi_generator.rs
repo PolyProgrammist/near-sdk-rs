@@ -205,9 +205,8 @@ impl ImplItemMethodInfo {
         match &self.attr_signature_info.returns.kind {
             Default => quote! { ::std::option::Option::None },
             General(status_result) => {
-                let ty = &status_result.result_type;
-                self.abi_result_tokens_with_return_value(&ty)
-            },
+                self.abi_result_tokens_with_return_value(&status_result.result_type)
+            }
             HandlesResultExplicit(ty) => {
                 // extract the `Ok` type from the result
                 let ty = parse_quote! { <#ty as near_sdk::__private::ResultTypeExt>::Okay };

@@ -234,10 +234,9 @@ fn parse_return_kind(
                 Ok(ReturnKind::HandlesResultExplicit(typ.clone()))
             }
         }
-        ResultHandling::None =>             
-            Ok(ReturnKind::General(crate::StatusResult {
-                result_type: typ.clone(),
-                persist_on_error,
-            }))
+        ResultHandling::None => Ok(ReturnKind::General(crate::StatusResult {
+            result_type: typ.clone(),
+            persist_on_error,
+        })),
     }
 }
