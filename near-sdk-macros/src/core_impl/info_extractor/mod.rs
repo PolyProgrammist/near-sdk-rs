@@ -1,3 +1,5 @@
+use proc_macro2::TokenStream as TokenStream2;
+use quote::ToTokens;
 use syn::{Receiver, ReturnType, Type};
 
 mod serializer_attr;
@@ -83,7 +85,7 @@ pub struct Returns {
     pub kind: ReturnKind,
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum ReturnKind {
     /// Return type is not specified.
     ///
@@ -100,7 +102,7 @@ pub enum ReturnKind {
     /// ```
     Default,
 
-    /// Return type is specified. But it does not have any specifics.
+    /// Return type is specified.
     ///
     /// When the contract call happens, in addition to the Default:
     ///  - The return value is serialized and returned
@@ -109,23 +111,7 @@ pub enum ReturnKind {
     /// ```ignore
     /// pub fn foo(&mut self) -> u64;
     /// ```
-    General(Type),
-
-    /// Return type is Result<OkType, ErrType> and the function is marked with #[handle_result].
-    /// ErrType struct implements near_sdk::FunctionError. (i.e. used with #[derive(near_sdk::FunctionError)])
-    ///
-    /// When the contract call happens, in addition to the General:
-    ///  - In case Result value is Ok, the unwrapped object is returned
-    ///  - In case Result value is Err, panic is called and state is not written.
-    ///
-    /// # Example:
-    /// ```ignore
-    /// #[handle_result]
-    /// pub fn foo(&mut self) -> Result<u64, &'static str>;
-    /// ```
-    HandlesResultExplicit(Type),
-
-    /// Return type is Result<OkType, ErrType> and, the function is not marked with #[handle_result] and
+    /// If return type is Result<OkType, ErrType> and, the function is not marked with #[handle_result] and
     /// ErrType struct implements near_sdk::ContractErrorTrait (i.e. used with #[near_sdk::contract_error])
     ///
     /// When the contract call happens, in addition to General:
@@ -155,12 +141,36 @@ pub enum ReturnKind {
     /// pub fn foo(&mut self) -> Result<u64, MyError>;
     /// ```
     ///
-    HandlesResultImplicit(StatusResult),
+    General(StatusResult),
+
+    /// Return type is Result<OkType, ErrType> and the function is marked with #[handle_result].
+    /// ErrType struct implements near_sdk::FunctionError. (i.e. used with #[derive(near_sdk::FunctionError)])
+    ///
+    /// When the contract call happens, in addition to the General:
+    ///  - In case Result value is Ok, the unwrapped object is returned
+    ///  - In case Result value is Err, panic is called and state is not written.
+    ///
+    /// # Example:
+    /// ```ignore
+    /// #[handle_result]
+    /// pub fn foo(&mut self) -> Result<u64, &'static str>;
+    /// ```
+    HandlesResultExplicit(Type),
 }
 /// In other cases the code should not compile
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct StatusResult {
     pub result_type: Type,
     pub persist_on_error: bool,
+}
+
+impl ReturnKind {
+    pub fn get_return_kind_type(&self) -> TokenStream2 {
+        match self {
+            ReturnKind::General(status_kind) => status_kind.result_type.clone().to_token_stream(),
+            ReturnKind::HandlesResultExplicit(result_type) => result_type.to_token_stream(),
+            ReturnKind::Default => unreachable!(),
+        }
+    }
 }

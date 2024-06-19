@@ -19,6 +19,8 @@ pub struct Contract {
     value: u32,
 }
 
+type MyResultAlias = Result<u32, MyErrorEnum>;
+
 #[near]
 impl Contract {
     #[init]
@@ -89,6 +91,16 @@ impl Contract {
         self.value += 1;
         if is_error {
             Err(MyErrorStruct { x: 5 })
+        } else {
+            Ok(self.value)
+        }
+    }
+
+    // Same as inc_handle_result but with alias for Result
+    pub fn inc_alias(&mut self, is_error: bool) -> MyResultAlias {
+        self.value += 1;
+        if is_error {
+            Err(MyErrorEnum::X)
         } else {
             Ok(self.value)
         }

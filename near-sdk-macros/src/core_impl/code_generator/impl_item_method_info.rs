@@ -28,9 +28,8 @@ impl ImplItemMethodInfo {
             // Extractor errors if Init method doesn't return anything, so we don't need extra check
             // here.
             ReturnKind::Default => self.void_return_body_tokens(),
-            ReturnKind::General(_) => self.value_return_body_tokens(),
+            ReturnKind::General(_) => self.result_return_body_tokens(),
             ReturnKind::HandlesResultExplicit { .. } => self.result_return_body_tokens(),
-            ReturnKind::HandlesResultImplicit { .. } => self.result_return_body_tokens(),
         };
 
         quote! {
@@ -63,22 +62,6 @@ impl ImplItemMethodInfo {
         }
     }
 
-    fn value_return_body_tokens(&self) -> TokenStream2 {
-        let contract_init = self.contract_init_tokens();
-        let method_invocation_with_return = self.method_invocation_with_return_tokens();
-        let contract_ser = self.contract_ser_tokens();
-        let value_ser = self.value_ser_tokens();
-        let value_return = self.value_return_tokens();
-
-        quote! {
-            #contract_init
-            #method_invocation_with_return
-            #value_ser
-            #value_return
-            #contract_ser
-        }
-    }
-
     fn result_return_body_tokens(&self) -> TokenStream2 {
         let contract_init = self.contract_init_tokens();
         let method_invocation_with_return = self.method_invocation_with_return_tokens();
@@ -88,9 +71,20 @@ impl ImplItemMethodInfo {
         let result_identifier = self.result_identifier();
         let handle_error = self.error_handling_tokens();
 
+        let mut check_contract_error_trait = quote! {};
+        if let ReturnKind::General(_) = &self.attr_signature_info.returns.kind {
+            check_contract_error_trait = quote! {
+                near_sdk::check_contract_error_trait(&err);
+            };
+        }
+
+        let the_type = self.attr_signature_info.returns.kind.get_return_kind_type();
+
         quote! {
             #contract_init
             #method_invocation_with_return
+            use near_sdk::ContractReturnNormalize;
+            let #result_identifier = (&std::marker::PhantomData::<#the_type>).normalize_return(#result_identifier);
             match #result_identifier {
                 ::std::result::Result::Ok(#result_identifier) => {
                     #value_ser
@@ -98,6 +92,7 @@ impl ImplItemMethodInfo {
                     #contract_ser
                 }
                 ::std::result::Result::Err(err) => {
+                    #check_contract_error_trait
                     #handle_error
                 }
             }
@@ -106,14 +101,14 @@ impl ImplItemMethodInfo {
 
     fn error_handling_tokens(&self) -> TokenStream2 {
         match &self.attr_signature_info.returns.kind {
-            ReturnKind::HandlesResultImplicit(status_result) => {
+            ReturnKind::General(status_result) => {
                 if status_result.persist_on_error {
                     let error_method_name =
                         quote::format_ident!("{}_error", self.attr_signature_info.ident);
                     let contract_ser = self.contract_ser_tokens();
                     quote! {
                         #contract_ser
-                        let promise = Contract::ext(::near_sdk::env::current_account_id()).#error_method_name(err).as_return();
+                        let promise = Contract::ext(::near_sdk::env::current_account_id()).#error_method_name(err.into()).as_return();
                     }
                 } else {
                     utils::standardized_error_panic_tokens()

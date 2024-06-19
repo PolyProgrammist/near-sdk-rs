@@ -7,7 +7,11 @@ pub(crate) use self::stable_map::StableMap;
 mod cache_entry;
 pub(crate) use cache_entry::{CacheEntry, EntryState};
 mod contract_error;
-pub use contract_error::{check_contract_error_trait, wrap_error, BaseError, ContractErrorTrait};
+pub use contract_error::{
+    check_contract_error_trait, wrap_error, BaseError, ContractErrorTrait, ContractReturnNormalize,
+};
+#[cfg(feature = "abi")]
+pub use contract_error::{BorshSerializationFormat, ContractReturnSchema, JsonSerializationFormat};
 
 use crate::{env, NearToken, PromiseResult};
 
