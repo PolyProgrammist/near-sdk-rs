@@ -41,15 +41,15 @@ impl Contract {
     // 0: Error: An error occurred during a `FunctionCall` Action, parameter is debug message.
     // ExecutionError("Smart contract panicked: error in inc_handle_result")
     // (does not change value)
-    // #[handle_result]
-    // pub fn inc_handle_result(&mut self, is_error: bool) -> Result<u32, &'static str> {
-    //     self.value += 1;
-    //     if is_error {
-    //         Err("error in inc_handle_result")
-    //     } else {
-    //         Ok(self.value)
-    //     }
-    // }
+    #[handle_result]
+    pub fn inc_handle_result(&mut self, is_error: bool) -> Result<u32, &'static str> {
+        self.value += 1;
+        if is_error {
+            Err("error in inc_handle_result")
+        } else {
+            Ok(self.value)
+        }
+    }
 
     // Examples of RPC response for function call:
     // is_error = false
@@ -96,6 +96,7 @@ impl Contract {
         }
     }
 
+    // Same as inc_handle_result but with alias for Result
     pub fn inc_alias(&mut self, is_error: bool) -> MyResultAlias {
         self.value += 1;
         if is_error {

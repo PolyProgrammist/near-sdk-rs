@@ -45,9 +45,7 @@ async fn test_error_handling() -> anyhow::Result<()> {
     let contract =
         worker.dev_deploy(&std::fs::read(format!("res/{}.wasm", "error_handling"))?).await?;
 
-    check_call(&contract, "inc_just_simple", false, 1, None).await;
-    // check_call(&contract, "inc_handle_result", false, 1, None).await;
-    
+    check_call(&contract, "inc_handle_result", false, 1, None).await;
     check_call(&contract, "inc_persist_on_err", false, 2, None).await;
     check_call(&contract, "inc_just_result", false, 3, None).await;
     check_call(&contract, "inc_just_simple", false, 4, None).await;

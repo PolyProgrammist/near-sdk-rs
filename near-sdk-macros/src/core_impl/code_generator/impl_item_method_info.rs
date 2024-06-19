@@ -28,11 +28,7 @@ impl ImplItemMethodInfo {
             // Extractor errors if Init method doesn't return anything, so we don't need extra check
             // here.
             ReturnKind::Default => self.void_return_body_tokens(),
-            ReturnKind::General(_) => {
-                eprintln!("body: {:?}", self.attr_signature_info.returns.kind);
-                eprintln!("body: {}", self.result_return_body_tokens().to_string());
-                self.result_return_body_tokens()
-            },
+            ReturnKind::General(_) => self.result_return_body_tokens(),
             ReturnKind::HandlesResultExplicit { .. } => self.result_return_body_tokens(),
         };
 
@@ -92,15 +88,22 @@ impl ImplItemMethodInfo {
         let handle_error = self.error_handling_tokens();
 
         let the_type = quote!{} ;
+        let mut check_contract_error_trait = quote!{};
+        if let ReturnKind::General(status_kind) = &self.attr_signature_info.returns.kind {
+            check_contract_error_trait = quote! {
+                near_sdk::check_contract_error_trait(&err);
+            };
+        }
 
         let the_type = match self.attr_signature_info.returns.kind.clone() {
             ReturnKind::General(status_kind) => {
                 status_kind.result_type.clone().to_token_stream()
             },
+            ReturnKind::HandlesResultExplicit(my_type) => {
+                my_type.to_token_stream()
+            },
             _ => the_type.clone().to_token_stream(),
         };
-        eprintln!("my_type: {:?}", self.attr_signature_info.returns.kind);
-        eprintln!("the_type: {}", the_type.to_string());
 
         quote! {
             #contract_init
@@ -114,7 +117,7 @@ impl ImplItemMethodInfo {
                     #contract_ser
                 }
                 ::std::result::Result::Err(err) => {
-                    near_sdk::check_contract_error_trait(&err);
+                    #check_contract_error_trait
                     #handle_error
                 }
             }
