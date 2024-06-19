@@ -102,7 +102,7 @@ pub enum ReturnKind {
     /// ```
     Default,
 
-    /// Return type is specified. But it does not have any specifics.
+    /// Return type is specified.
     ///
     /// When the contract call happens, in addition to the Default:
     ///  - The return value is serialized and returned
@@ -111,6 +111,36 @@ pub enum ReturnKind {
     /// ```ignore
     /// pub fn foo(&mut self) -> u64;
     /// ```
+    /// If return type is Result<OkType, ErrType> and, the function is not marked with #[handle_result] and
+    /// ErrType struct implements near_sdk::ContractErrorTrait (i.e. used with #[near_sdk::contract_error])
+    ///
+    /// When the contract call happens, in addition to General:
+    ///  - In case Result value is Err, panic is called and state is not written.
+    /// As soon as ErrType implements ContractErrorTrait, it is returned as a well-defined structure.
+    /// You can see the structure in #[contract_error] documentation.
+    /// If the error struct does not implement ContractErrorTrait, the code should not compile.
+    ///  - In case #[persist_on_error] is used on method, panic is not called.
+    /// And the contract state is written safely.
+    /// But the extra <method_name>_error method is generated.
+    /// And this method is called in a new Promise.
+    /// This method effectively panics with structured error.
+    ///
+    /// # Example:
+    /// ```ignore
+    /// #[contract_error]
+    /// pub struct MyError;
+    ///
+    /// // if Ok() is returned, everything ok, otherwise panic with well-structured error
+    /// pub fn foo(&mut self) -> Result<u64, MyError>;
+    /// ```
+    ///
+    /// ```ignore
+    /// // Write state safely anyway.
+    /// // if Ok() is returned, just return. Otherwise call new Promise which will panic with well-structured error.
+    /// #[persist_on_error]
+    /// pub fn foo(&mut self) -> Result<u64, MyError>;
+    /// ```
+    ///
     General(StatusResult),
 
     /// Return type is Result<OkType, ErrType> and the function is marked with #[handle_result].
