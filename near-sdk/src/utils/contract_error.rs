@@ -26,37 +26,46 @@ use std::marker::PhantomData;
 use crate::borsh::{schema::BorshSchemaContainer, BorshSchema};
 use schemars::{schema::{RootSchema, Schema}, schema_for, JsonSchema};
 
+#[cfg(feature = "abi")]
 pub trait SerializationFormat {
     type SchemaObject;
 }
 
+#[cfg(feature = "abi")]
 pub struct Json;
+#[cfg(feature = "abi")]
 impl SerializationFormat for Json {
     type SchemaObject = Schema;
 }
 
+#[cfg(feature = "abi")]
 pub struct Borsh;
+#[cfg(feature = "abi")]
 impl SerializationFormat for Borsh {
     type SchemaObject = BorshSchemaContainer;
 }
 
+#[cfg(feature = "abi")]
 trait SerializableWith<S: SerializationFormat> {
     fn schema() -> S::SchemaObject;
 }
 
+#[cfg(feature = "abi")]
 impl<T: JsonSchema> SerializableWith<Json> for T {
     fn schema() -> Schema {
         schemars::gen::SchemaGenerator::default().subschema_for::<T>()
     }
 }
 
+#[cfg(feature = "abi")]
 impl<T: BorshSchema> SerializableWith<Borsh> for T {
     fn schema() -> BorshSchemaContainer {
         crate::borsh::schema_container_of::<T>()
     }
 }
 
-pub trait ContractReturn<S: SerializationFormat, Error> {
+#[cfg(feature = "abi")]
+pub trait ContractReturnSchema<S: SerializationFormat, Error> {
     // The method return type as specified by the user of the framework.
     type Input;
     // The `Ok` type in the normalized `Result<Ok, _>`.
@@ -70,6 +79,13 @@ pub trait ContractReturn<S: SerializationFormat, Error> {
     // so that we can disambiguate the `S` type parameter in scenarios
     // where we abuse deref coercion.
     fn schema(self, _serialization_format: S) -> S::SchemaObject;
+}
+
+pub trait ContractReturnNormalize<Error> {
+    // The method return type as specified by the user of the framework.
+    type Input;
+    // The `Ok` type in the normalized `Result<Ok, _>`.
+    type Okay;
 
     // The `self` receiver is only here as an anchor - we abuse method resolution
     // (deref coercion) to emulate specialization. The real receiver is the `ret`
@@ -80,29 +96,34 @@ pub trait ContractReturn<S: SerializationFormat, Error> {
     // where we abuse deref coercion.
     fn normalize_return(
         self,
-        _serialization_format: S,
         ret: Self::Input,
     ) -> Result<Self::Okay, Error>;
 }
 
-impl<S: SerializationFormat, T: SerializableWith<S>> ContractReturn<S, BaseError> for PhantomData<T> {
+#[cfg(feature = "abi")]
+impl<S: SerializationFormat, T: SerializableWith<S>> ContractReturnSchema<S, BaseError> for PhantomData<T> {
     type Input = T;
     type Okay = T;
 
     fn schema(self, _serialization_format: S) -> S::SchemaObject {
         T::schema()
     }
+}
+
+impl<T> ContractReturnNormalize<BaseError> for PhantomData<T> {
+    type Input = T;
+    type Okay = T;
 
     fn normalize_return(
         self,
-        _serialization_format: S,
         ret: Self::Input,
     ) -> Result<Self::Okay, BaseError> {
         Ok(ret)
     }
 }
 
-impl<S: SerializationFormat, T: SerializableWith<S>, Error> ContractReturn<S, Error>
+#[cfg(feature = "abi")]
+impl<S: SerializationFormat, T: SerializableWith<S>, Error> ContractReturnSchema<S, Error>
     for &PhantomData<Result<T, Error>>
 {
     type Input = Result<T, Error>;
@@ -111,10 +132,16 @@ impl<S: SerializationFormat, T: SerializableWith<S>, Error> ContractReturn<S, Er
     fn schema(self, _serialization_format: S) -> S::SchemaObject {
         T::schema()
     }
+}
+
+impl<T, Error> ContractReturnNormalize<Error>
+    for &PhantomData<Result<T, Error>>
+{
+    type Input = Result<T, Error>;
+    type Okay = T;
 
     fn normalize_return(
         self,
-        _serialization_format: S,
         ret: Self::Input,
     ) -> Result<Self::Okay, Error> {
         ret

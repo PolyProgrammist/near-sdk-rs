@@ -17,7 +17,6 @@ pub struct MyErrorStruct {
 
 #[near(contract_state)]
 #[derive(Default)]
-#[derive(JsonSchema)]
 pub struct Contract {
     value: u32,
 }

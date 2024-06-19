@@ -97,7 +97,6 @@ impl ImplItemMethodInfo {
             ReturnKind::General(status_kind) => {
                 status_kind.result_type.clone().to_token_stream()
             },
-            // ReturnKind::General(the_type) => the_type.clone().to_token_stream(),
             _ => the_type.clone().to_token_stream(),
         };
         eprintln!("my_type: {:?}", self.attr_signature_info.returns.kind);
@@ -106,8 +105,8 @@ impl ImplItemMethodInfo {
         quote! {
             #contract_init
             #method_invocation_with_return
-            use near_sdk::ContractReturn;
-            let #result_identifier = (&std::marker::PhantomData::<#the_type>).normalize_return(near_sdk::MyJson, #result_identifier);
+            use near_sdk::ContractReturnNormalize;
+            let #result_identifier = (&std::marker::PhantomData::<#the_type>).normalize_return(#result_identifier);
             match #result_identifier {
                 ::std::result::Result::Ok(#result_identifier) => {
                     #value_ser
@@ -137,9 +136,6 @@ impl ImplItemMethodInfo {
                     utils::standardized_error_panic_tokens()
                 }
             },
-            // ReturnKind::General(the_type) => {
-            //     utils::standardized_error_panic_tokens()
-            // },
             ReturnKind::HandlesResultExplicit { .. } => quote! {
                 ::near_sdk::FunctionError::panic(&err);
             },

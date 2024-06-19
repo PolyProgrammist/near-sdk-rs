@@ -21,7 +21,7 @@ pub fn generate(i: &ItemImplInfo) -> TokenStream2 {
             #[no_mangle]
             pub extern "C" fn #near_abi_symbol() -> (*const u8, usize) {
                 use ::std::string::String;
-                use ::near_sdk::ContractReturn;
+                use ::near_sdk::ContractReturnSchema;
 
                 let mut gen = ::near_sdk::schemars::gen::SchemaGenerator::default();
                 let functions = vec![#(#functions),*];
